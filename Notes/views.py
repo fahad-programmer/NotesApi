@@ -85,7 +85,14 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+        # Generate a token for the newly created user
+        user = User.objects.get(pk=serializer.data['id'])
+        token, created = Token.objects.get_or_create(user=user)
+
+        # Return the token in the response
+        return Response({'token': token.key}, status=status.HTTP_201_CREATED, headers=headers)
+
 
     def login(self, request, *args, **kwargs):
         username = request.data.get('username')
