@@ -9,6 +9,8 @@ from rest_framework.decorators import api_view
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
 from django.views.decorators.csrf import csrf_protect
+from django.db import IntegrityError
+from django.core.exceptions import ValidationError
 
 User = get_user_model()
 
@@ -82,9 +84,14 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+        except IntegrityError:
+            return Response({"message": "Username or email is already in use"}, status=status.HTTP_400_BAD_REQUEST)
+        except ValidationError:
+            return Response({"message":"Invalid Data Check Your Input Please"})
 
         # Generate a token for the newly created user
         user = User.objects.get(pk=serializer.data['id'])
@@ -102,4 +109,4 @@ class UserViewSet(viewsets.ModelViewSet):
             token, created = Token.objects.get_or_create(user=user)
             return Response({'token': token.key})
         else:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
+            return Response({"message":"Username Or Password Is Incorrect"},status=status.HTTP_401_UNAUTHORIZED)
