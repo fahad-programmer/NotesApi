@@ -108,6 +108,17 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = [
+
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+    # specific authentication methods, such as login by e-mail
+    'Notes.backend.EmailBackend',
+
+]
+
+
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/

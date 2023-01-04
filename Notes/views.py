@@ -45,6 +45,8 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        if len(Note.objects.filter(user=user.id)) < 1:
+            return Response("You Have 0 Notes", status=status.HTTP_200_OK)
         return Note.objects.filter(user=user.id)
 
     def create(self, request, *args, **kwargs):
@@ -86,6 +88,8 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
+            if User.objects.filter(email=request.data['email']).exists():
+                return Response({"message":"Email Already Exists"}, status=status.HTTP_400_BAD_REQUEST)
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
         except IntegrityError:
