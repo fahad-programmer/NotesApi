@@ -45,8 +45,6 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if len(Note.objects.filter(user=user.id)) < 1:
-            return Response("You Have 0 Notes", status=status.HTTP_200_OK)
         return Note.objects.filter(user=user.id)
 
     def create(self, request, *args, **kwargs):
