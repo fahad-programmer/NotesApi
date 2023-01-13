@@ -1,16 +1,15 @@
-from django.http import HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .models import Note
 from .serializers import NoteSerializer, UserSerializer
 from django.contrib.auth import authenticate, login, get_user_model
-from rest_framework.views import APIView
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, action
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.authtoken.models import Token
-from django.views.decorators.csrf import csrf_protect
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
+from rest_framework import viewsets, permissions
+
 
 User = get_user_model()
 
@@ -33,11 +32,6 @@ def get_user_from_token(request):
         return Response({'error': 'Invalid token'}, status=401)
 
 
-@csrf_protect
-def get_csrf_token(request):
-    return HttpResponse(request.META["CSRF_COOKIE"], content_type="text/plain")
-
-
 class NoteViewSet(viewsets.ModelViewSet):
     queryset = Note.objects.all()
     serializer_class = NoteSerializer
@@ -54,6 +48,7 @@ class NoteViewSet(viewsets.ModelViewSet):
         serializer.save(user=user)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.pop('partial', False)
@@ -108,7 +103,35 @@ class UserViewSet(viewsets.ModelViewSet):
         password = request.data.get('password')
         user = authenticate(request, username=username, password=password)
         if user is not None:
-            token, created = Token.objects.get_or_create(user=user)
+            token = Token.objects.get_or_create(user=user)
             return Response({'token': token.key})
         else:
             return Response({"message":"Username Or Password Is Incorrect"},status=status.HTTP_401_UNAUTHORIZED)
+
+
+class NoteSearchViewSet(viewsets.ModelViewSet):
+    # Use token authentication
+    authentication_classes = [TokenAuthentication]
+    # Use the Note model
+    queryset = Note.objects.all()
+    # Use the NoteSerializer
+    serializer_class = NoteSerializer
+    # Only allow authenticated users to access the API
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Only return notes for the authenticated user
+        return Note.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def search(self, request, term):
+        # Get the search term from the URL
+        search_term = term
+        # Get all notes for the authenticated user
+        notes = self.get_queryset()
+        # Filter the notes by the search term
+        matching_notes = notes.filter(title__contains=search_term)
+        # Serialize the matching notes
+        serializer = self.get_serializer(matching_notes, many=True)
+        # Return the serialized data in the API response
+        return Response(serializer.data)
