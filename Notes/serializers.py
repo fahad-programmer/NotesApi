@@ -8,7 +8,7 @@ User = get_user_model()
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
-        fields = ['id', 'title', 'body', 'created_at', 'updated_at']
+        fields = ['id', 'title', 'body', 'created_at', 'updated_at', 'deleted_at']
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,8 +45,6 @@ class PasswordUpdateSerializer(serializers.Serializer):
 
 class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
-
-from rest_framework import serializers
 
 class ResetPasswordSerializer(serializers.Serializer):
     password = serializers.CharField(max_length=128)

@@ -12,15 +12,14 @@ class Note(models.Model):
     body = models.TextField()
     is_deleted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    deleted_at = models.DateTimeField(blank=True, null=True)
+    deleted_at = models.DateField(blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def trash(self):
         self.is_deleted = True
-        self.deleted_at = timezone.now()
+        self.deleted_at = timezone.now().date()  # set deleted_at to current date
         delete_old_notes(sender=Note, instance=self)
         self.save()
-        
 
     def restore(self):
         self.is_deleted = False
@@ -29,7 +28,8 @@ class Note(models.Model):
 
     def __str__(self):
         return self.title
-    
+
+
 @receiver(post_save, sender=Note)
 def delete_old_notes(sender, **kwargs):
     days_to_keep = 7
@@ -45,8 +45,8 @@ class UserActions(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
-        return self.user.username 
-    
+        return self.user.username
+
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

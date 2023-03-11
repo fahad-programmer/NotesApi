@@ -24,7 +24,7 @@ urlpatterns = [
     path('update-password', views.password_update_api, name="password-update"),
     path('forget-password', views.ForgotPasswordView.as_view(), name="forget-password"),
     path('reset-password', views.ResetPasswordView.as_view(), name="forget-password"),
-    path('trash', views.TrashView.as_view({'get':'TrashNotes'}), name="trash")
+    path('user-profile', views.user_profile.as_view(), name="user-profile"),
 ]
 
 

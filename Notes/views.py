@@ -67,28 +67,32 @@ class NoteViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        self.perform_destroy(instance)
 
         #Creating user actions
         user_act = UserActions.objects.create(user=request.user, action=f"Dear {request.user.username} You Created A Note")
         user_act.save()
 
+        self.perform_destroy(instance)
+
         return Response(status=status.HTTP_200_OK)
+
+
     
     def trash(self, request, *args, **kwargs):
         instance = self.get_object()
         instance.trash()
         return Response(status=status.HTTP_200_OK)
 
-    def restore(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.restore()
+    def restore(self, request, pk=None, *args, **kwargs):
+        try:
+            note = Note.objects.get(pk=pk)
+        except Note.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        #Making it un-deleted
+        note.restore()
+        return Response(status.HTTP_200_OK)
 
-        #Creating user actions
-        user_act = UserActions.objects.create(user=request.user, action=f"Dear {request.user.username} You Restored A Note")
-        user_act.save()
-
-        return Response(status=status.HTTP_200_OK)
     
 
 
@@ -185,23 +189,7 @@ class TrashView(viewsets.ModelViewSet):
 
 
 
-@api_view(['GET'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def user_profile(request):
-    # Get the authenticated user from the request object
-    user = request.user
 
-    # Serialize the user object to JSON
-    data = {
-        'username': user.username,
-        'email': user.email,
-        'first_name': user.first_name,
-        'last_name': user.last_name,
-    }
-
-    # Return the serialized user object in the API response
-    return Response(data)
 
 @api_view(['GET'])
 @authentication_classes([TokenAuthentication])
@@ -283,3 +271,11 @@ class ResetPasswordView(APIView):
 
             return Response({'success': 'Your password has been reset successfully.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@authentication_classes([TokenAuthentication])
+class user_profile(APIView):
+    def get(self, request):
+        user = request.user
+        number_of_notes = len(Note.objects.filter(user=user, is_deleted=False))
+        return Response({'username': user.username, 'email': user.email, 'number_of_notes':number_of_notes})
