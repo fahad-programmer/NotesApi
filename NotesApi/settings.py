@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'Notes',
     'rest_framework.authtoken',  # <-- Here
+    'ckeditor'
 ]
 
 REST_FRAMEWORK = {
@@ -155,3 +156,6 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'qikkscorp.inc@gmail.com'  # replace with your email address
 EMAIL_HOST_PASSWORD = 'uwlhnncwcbqqvkjn'  # replace with your email password
+
+
+CKEDITOR_UPLOAD_PATH = 'content/ckeditor/'
